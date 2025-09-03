@@ -1,27 +1,28 @@
+using Microsoft.AspNetCore.Mvc;
+using ScreenSound.API.Endpoints;
 using ScreenSound.Banco;
+using ScreenSound.Migrations;
 using ScreenSound.Modelos;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<ScreenSoundContext>();
+builder.Services.AddTransient<DAL<Artista>>();
+builder.Services.AddTransient<DAL<Musica>>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options => 
                    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
 var app = builder.Build();
 
-app.MapGet("/artistas", () =>{
-    var dal = new DAL<Artista>(new ScreenSoundContext());
-    return Results.Ok(dal.Listar());
-});
+app.AddEndPointsArtistas();
+app.AddEndPointsMusicas();
 
-app.MapGet("/artistas/{nome}", ( string nome) => {
-    var dal = new DAL<Artista>(new ScreenSoundContext());
-    var artista = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
-
-    if (artista is null)
-        return Results.NotFound();
-
-    return Results.Ok(artista);
-
-
-});
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.Run();
